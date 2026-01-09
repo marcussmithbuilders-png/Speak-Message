@@ -1,128 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Speak Message</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>Speak Message</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-      background: #f5f5f5;
-    }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f4f4f4;
+  }
 
-    h1 {
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
+  h1 {
+    font-size: 28px;
+  }
 
-    button {
-      font-size: 20px;
-      padding: 16px 22px;
-      margin: 10px;
-      width: 90%;
-      max-width: 400px;
-      border: none;
-      border-radius: 10px;
-      color: white;
-    }
+  button {
+    font-size: 20px;
+    padding: 14px 22px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    width: 90%;
+    max-width: 320px;
+  }
 
-    #startBtn {
-      background: #2e7d32; /* green */
-    }
+  #startBtn { background: #2e8b57; }   /* green */
+  #stopBtn  { background: #c0392b; }   /* red */
+  #copyBtn  { background: #2874a6; }
+  #readBtn  { background: #6f42c1; }
 
-    #stopBtn {
-      background: #c62828; /* red */
-      display: none;
-    }
-
-    #copyBtn {
-      background: #1565c0;
-    }
-
-    #readBtn {
-      background: #6a1b9a;
-    }
-
-    textarea {
-      width: 95%;
-      max-width: 600px;
-      height: 160px;
-      font-size: 22px;
-      padding: 14px;
-      margin-top: 15px;
-    }
-
-    .status {
-      font-size: 18px;
-      margin-top: 10px;
-      min-height: 24px;
-    }
-  </style>
+  textarea {
+    width: 95%;
+    max-width: 600px;
+    height: 160px;
+    font-size: 20px;
+    padding: 12px;
+    margin-top: 15px;
+  }
+</style>
 </head>
 
 <body>
 
-  <h1>Speak Message</h1>
+<h1>Speak Your Message</h1>
 
-  <button id="startBtn">▶ Start Speaking</button>
-  <button id="stopBtn">■ Stop Speaking</button>
+<button id="startBtn">Start Speaking</button>
+<button id="stopBtn">Stop Speaking</button>
+<br>
+<button id="copyBtn">Copy Message</button>
+<button id="readBtn">Read Message</button>
 
-  <div class="status" id="status"></div>
+<textarea id="output" placeholder="Your message will appear here..."></textarea>
 
-  <textarea id="text" placeholder="Your message will appear here..."></textarea>
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
 
-  <br>
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = "en-NZ";
 
-  <button id="copyBtn">📋 Copy Message</button>
-  <button id="readBtn">🔊 Read Message</button>
+  let listening = false;
 
-  <script>
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = "en-NZ";
-
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const textArea = document.getElementById("text");
-    const status = document.getElementById("status");
-
-    startBtn.onclick = () => {
-      recognition.start();
-      status.textContent = "Listening… speak normally";
-      startBtn.style.display = "none";
-      stopBtn.style.display = "inline-block";
-    };
-
-    stopBtn.onclick = () => {
-      recognition.stop();
-      status.textContent = "Stopped listening";
-      stopBtn.style.display = "none";
-      startBtn.style.display = "inline-block";
-    };
-
-    recognition.onresult = (event) => {
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        textArea.value += event.results[i][0].transcript + " ";
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        document.getElementById("output").value += event.results[i][0].transcript + " ";
       }
-    };
+    }
+  };
 
-    document.getElementById("copyBtn").onclick = () => {
-      textArea.select();
-      document.execCommand("copy");
-      status.textContent = "Message copied";
-    };
+  // 🔑 THIS IS THE FIX
+  recognition.onend = () => {
+    if (listening) {
+      recognition.start(); // auto-restart after silence
+    }
+  };
 
-    document.getElementById("readBtn").onclick = () => {
-      const msg = new SpeechSynthesisUtterance(textArea.value);
-      speechSynthesis.speak(msg);
-    };
-  </script>
+  document.getElementById("startBtn").onclick = () => {
+    if (!listening) {
+      listening = true;
+      recognition.start();
+    }
+  };
+
+  document.getElementById("stopBtn").onclick = () => {
+    listening = false;
+    recognition.stop();
+  };
+
+  document.getElementById("copyBtn").onclick = () => {
+    navigator.clipboard.writeText(document.getElementById("output").value);
+    alert("Message copied");
+  };
+
+  document.getElementById("readBtn").onclick = () => {
+    const msg = new SpeechSynthesisUtterance(document.getElementById("output").value);
+    speechSynthesis.speak(msg);
+  };
+</script>
 
 </body>
 </html>
