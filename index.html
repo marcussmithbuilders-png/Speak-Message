@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Speak Message</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    text-align: center;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 18px;
+  }
+
+  button {
+    font-size: 20px;
+    padding: 16px 22px;
+    margin: 10px;
+    width: 90%;
+    max-width: 400px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+  }
+
+  #speakBtn { background: #007bff; }
+  #readBtn  { background: #6f42c1; }
+  #copyBtn  { background: #28a745; }
+
+  textarea {
+    width: 95%;
+    max-width: 600px;
+    height: 160px;
+    font-size: 20px;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }
+
+  .status {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #333;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>Speak Message</h1>
+<p>Press the button and talk</p>
+
+<button id="speakBtn">🎤 Start Speaking</button>
+<button id="readBtn">🔊 Read Message</button>
+<button id="copyBtn">📋 Copy Message</button>
+
+<br>
+<textarea id="output" placeholder="Your message will appear here..."></textarea>
+
+<div class="status" id="status"></div>
+
+<script>
+  const output = document.getElementById("output");
+  const statusText = document.getElementById("status");
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech recognition is not supported on this device.");
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-NZ";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  document.getElementById("speakBtn").onclick = () => {
+    statusText.textContent = "Listening…";
+    recognition.start();
+  };
+
+  recognition.onresult = (event) => {
+    output.value += event.results[0][0].transcript + " ";
+    statusText.textContent = "Finished listening";
+  };
+
+  recognition.onerror = () => {
+    statusText.textContent = "Could not hear you. Try again.";
+  };
+
+  document.getElementById("readBtn").onclick = () => {
+    const speech = new SpeechSynthesisUtterance(output.value);
+    speech.lang = "en-NZ";
+    window.speechSynthesis.speak(speech);
+  };
+
+  document.getElementById("copyBtn").onclick = () => {
+    output.select();
+    document.execCommand("copy");
+    statusText.textContent = "Message copied ✔";
+  };
+</script>
+
+</body>
+</html>
