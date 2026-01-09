@@ -1,116 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Speak Message</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Speak Message</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    text-align: center;
-    padding: 20px;
-  }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #f5f5f5;
+    }
 
-  h1 {
-    font-size: 28px;
-    margin-bottom: 10px;
-  }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
 
-  p {
-    font-size: 18px;
-  }
+    button {
+      font-size: 20px;
+      padding: 16px 22px;
+      margin: 10px;
+      width: 90%;
+      max-width: 400px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+    }
 
-  button {
-    font-size: 20px;
-    padding: 16px 22px;
-    margin: 10px;
-    width: 90%;
-    max-width: 400px;
-    border: none;
-    border-radius: 10px;
-    color: white;
-  }
+    #startBtn {
+      background: #2e7d32; /* green */
+    }
 
-  #speakBtn { background: #007bff; }
-  #readBtn  { background: #6f42c1; }
-  #copyBtn  { background: #28a745; }
+    #stopBtn {
+      background: #c62828; /* red */
+      display: none;
+    }
 
-  textarea {
-    width: 95%;
-    max-width: 600px;
-    height: 160px;
-    font-size: 20px;
-    padding: 12px;
-    margin-top: 15px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-  }
+    #copyBtn {
+      background: #1565c0;
+    }
 
-  .status {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #333;
-  }
-</style>
+    #readBtn {
+      background: #6a1b9a;
+    }
+
+    textarea {
+      width: 95%;
+      max-width: 600px;
+      height: 160px;
+      font-size: 22px;
+      padding: 14px;
+      margin-top: 15px;
+    }
+
+    .status {
+      font-size: 18px;
+      margin-top: 10px;
+      min-height: 24px;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>Speak Message</h1>
-<p>Press the button and talk</p>
+  <h1>Speak Message</h1>
 
-<button id="speakBtn">🎤 Start Speaking</button>
-<button id="readBtn">🔊 Read Message</button>
-<button id="copyBtn">📋 Copy Message</button>
+  <button id="startBtn">▶ Start Speaking</button>
+  <button id="stopBtn">■ Stop Speaking</button>
 
-<br>
-<textarea id="output" placeholder="Your message will appear here..."></textarea>
+  <div class="status" id="status"></div>
 
-<div class="status" id="status"></div>
+  <textarea id="text" placeholder="Your message will appear here..."></textarea>
 
-<script>
-  const output = document.getElementById("output");
-  const statusText = document.getElementById("status");
+  <br>
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  <button id="copyBtn">📋 Copy Message</button>
+  <button id="readBtn">🔊 Read Message</button>
 
-  if (!SpeechRecognition) {
-    alert("Speech recognition is not supported on this device.");
-  }
+  <script>
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-NZ";
-  recognition.continuous = false;
-  recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = "en-NZ";
 
-  document.getElementById("speakBtn").onclick = () => {
-    statusText.textContent = "Listening…";
-    recognition.start();
-  };
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const textArea = document.getElementById("text");
+    const status = document.getElementById("status");
 
-  recognition.onresult = (event) => {
-    output.value += event.results[0][0].transcript + " ";
-    statusText.textContent = "Finished listening";
-  };
+    startBtn.onclick = () => {
+      recognition.start();
+      status.textContent = "Listening… speak normally";
+      startBtn.style.display = "none";
+      stopBtn.style.display = "inline-block";
+    };
 
-  recognition.onerror = () => {
-    statusText.textContent = "Could not hear you. Try again.";
-  };
+    stopBtn.onclick = () => {
+      recognition.stop();
+      status.textContent = "Stopped listening";
+      stopBtn.style.display = "none";
+      startBtn.style.display = "inline-block";
+    };
 
-  document.getElementById("readBtn").onclick = () => {
-    const speech = new SpeechSynthesisUtterance(output.value);
-    speech.lang = "en-NZ";
-    window.speechSynthesis.speak(speech);
-  };
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        textArea.value += event.results[i][0].transcript + " ";
+      }
+    };
 
-  document.getElementById("copyBtn").onclick = () => {
-    output.select();
-    document.execCommand("copy");
-    statusText.textContent = "Message copied ✔";
-  };
-</script>
+    document.getElementById("copyBtn").onclick = () => {
+      textArea.select();
+      document.execCommand("copy");
+      status.textContent = "Message copied";
+    };
+
+    document.getElementById("readBtn").onclick = () => {
+      const msg = new SpeechSynthesisUtterance(textArea.value);
+      speechSynthesis.speak(msg);
+    };
+  </script>
 
 </body>
 </html>
