@@ -38,6 +38,11 @@
     display: none;
   }
 
+  #readAgainBtn {
+    background: #1565c0; /* blue */
+    display: none;
+  }
+
   textarea {
     width: 95%;
     max-width: 600px;
@@ -63,6 +68,7 @@
 
 <button id="startBtn">▶ Start Speaking</button>
 <button id="stopBtn">■ Stop Speaking</button>
+<button id="readAgainBtn">🔊 Read Again</button>
 
 <div class="status" id="status"></div>
 
@@ -78,10 +84,29 @@
 
   const startBtn = document.getElementById("startBtn");
   const stopBtn = document.getElementById("stopBtn");
+  const readAgainBtn = document.getElementById("readAgainBtn");
   const output = document.getElementById("output");
   const status = document.getElementById("status");
 
   let listening = false;
+
+  function speakMessage() {
+    if (!output.value.trim()) return;
+
+    const speech = new SpeechSynthesisUtterance(output.value);
+    speech.lang = "en-NZ";
+    speech.rate = 0.8;   // 🔑 slower speaking speed
+    speech.pitch = 1.0;
+
+    speech.onend = () => {
+      navigator.clipboard.writeText(output.value);
+      status.textContent = "Message copied";
+      readAgainBtn.style.display = "block";
+    };
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(speech);
+  }
 
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -103,6 +128,7 @@
     status.textContent = "Listening…";
     startBtn.style.display = "none";
     stopBtn.style.display = "block";
+    readAgainBtn.style.display = "none";
   };
 
   stopBtn.onclick = () => {
@@ -113,17 +139,12 @@
     startBtn.style.display = "block";
     stopBtn.style.display = "none";
 
-    // 🔊 Auto-read
-    const speech = new SpeechSynthesisUtterance(output.value);
-    speech.lang = "en-NZ";
+    speakMessage(); // 🔊 auto-read then auto-copy
+  };
 
-    speech.onend = () => {
-      // 📋 Auto-copy after read
-      navigator.clipboard.writeText(output.value);
-      status.textContent = "Message copied";
-    };
-
-    window.speechSynthesis.speak(speech);
+  readAgainBtn.onclick = () => {
+    status.textContent = "Reading again…";
+    speakMessage();
   };
 </script>
 
