@@ -3,61 +3,62 @@
 <head>
 <meta charset="UTF-8" />
 <title>Speak Message</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #f4f4f4;
+    background: #f2f2f2;
     text-align: center;
     padding: 20px;
+    margin: 0;
   }
 
   h1 {
-    font-size: 30px;
-    margin-bottom: 20px;
+    font-size: 32px;
+    margin-bottom: 25px;
   }
 
   button {
-    font-size: 26px;
-    padding: 20px;
-    margin: 15px 0;
+    font-size: 30px;
+    padding: 24px;
+    margin: 20px 0;
     width: 95%;
-    max-width: 420px;
+    max-width: 480px;
     border: none;
-    border-radius: 14px;
+    border-radius: 16px;
     color: white;
   }
 
   #startBtn {
-    background: #2e7d32; /* green */
+    background: #2e7d32;
   }
 
   #stopBtn {
-    background: #c62828; /* red */
+    background: #c62828;
     display: none;
   }
 
   #readAgainBtn {
-    background: #1565c0; /* blue */
+    background: #1565c0;
     display: none;
   }
 
   textarea {
     width: 95%;
-    max-width: 600px;
-    height: 180px;
-    font-size: 22px;
-    padding: 14px;
-    margin-top: 20px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
+    max-width: 700px;
+    height: 220px;
+    font-size: 26px;
+    padding: 18px;
+    margin-top: 25px;
+    border-radius: 14px;
+    border: 2px solid #ccc;
   }
 
   .status {
-    font-size: 18px;
+    font-size: 20px;
     margin-top: 15px;
-    min-height: 24px;
+    min-height: 28px;
   }
 </style>
 </head>
@@ -66,9 +67,9 @@
 
 <h1>Speak Message</h1>
 
-<button id="startBtn">▶ Start Speaking</button>
-<button id="stopBtn">■ Stop Speaking</button>
-<button id="readAgainBtn">🔊 Read Again</button>
+<button id="startBtn">START SPEAKING</button>
+<button id="stopBtn">STOP SPEAKING</button>
+<button id="readAgainBtn">READ AGAIN</button>
 
 <div class="status" id="status"></div>
 
@@ -89,14 +90,27 @@
   const status = document.getElementById("status");
 
   let listening = false;
+  let selectedVoice = null;
+
+  // 🔊 Choose a male voice if available
+  function loadVoices() {
+    const voices = speechSynthesis.getVoices();
+    selectedVoice =
+      voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("male")) ||
+      voices.find(v => v.lang.startsWith("en")) ||
+      voices[0];
+  }
+
+  speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
 
   function speakMessage() {
     if (!output.value.trim()) return;
 
     const speech = new SpeechSynthesisUtterance(output.value);
-    speech.lang = "en-NZ";
-    speech.rate = 0.8;   // 🔑 slower speaking speed
-    speech.pitch = 1.0;
+    speech.voice = selectedVoice;
+    speech.rate = 0.75;   // 🔑 slower, clearer
+    speech.pitch = 0.9;   // slightly lower
 
     speech.onend = () => {
       navigator.clipboard.writeText(output.value);
@@ -104,8 +118,8 @@
       readAgainBtn.style.display = "block";
     };
 
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(speech);
+    speechSynthesis.cancel();
+    speechSynthesis.speak(speech);
   }
 
   recognition.onresult = (event) => {
@@ -117,9 +131,7 @@
   };
 
   recognition.onend = () => {
-    if (listening) {
-      recognition.start(); // auto-restart after silence
-    }
+    if (listening) recognition.start();
   };
 
   startBtn.onclick = () => {
@@ -135,11 +147,9 @@
     listening = false;
     recognition.stop();
     status.textContent = "Reading message…";
-
     startBtn.style.display = "block";
     stopBtn.style.display = "none";
-
-    speakMessage(); // 🔊 auto-read then auto-copy
+    speakMessage();
   };
 
   readAgainBtn.onclick = () => {
