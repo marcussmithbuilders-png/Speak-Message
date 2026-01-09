@@ -8,51 +8,63 @@
 <style>
   body {
     font-family: Arial, sans-serif;
+    background: #f4f4f4;
     text-align: center;
     padding: 20px;
-    background: #f4f4f4;
   }
 
   h1 {
-    font-size: 28px;
+    font-size: 30px;
+    margin-bottom: 20px;
   }
 
   button {
-    font-size: 20px;
-    padding: 14px 22px;
-    margin: 10px;
+    font-size: 26px;
+    padding: 20px;
+    margin: 15px 0;
+    width: 95%;
+    max-width: 420px;
     border: none;
-    border-radius: 8px;
+    border-radius: 14px;
     color: white;
-    width: 90%;
-    max-width: 320px;
   }
 
-  #startBtn { background: #2e8b57; }   /* green */
-  #stopBtn  { background: #c0392b; }   /* red */
-  #copyBtn  { background: #2874a6; }
-  #readBtn  { background: #6f42c1; }
+  #startBtn {
+    background: #2e7d32; /* green */
+  }
+
+  #stopBtn {
+    background: #c62828; /* red */
+    display: none;
+  }
 
   textarea {
     width: 95%;
     max-width: 600px;
-    height: 160px;
-    font-size: 20px;
-    padding: 12px;
+    height: 180px;
+    font-size: 22px;
+    padding: 14px;
+    margin-top: 20px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }
+
+  .status {
+    font-size: 18px;
     margin-top: 15px;
+    min-height: 24px;
   }
 </style>
 </head>
 
 <body>
 
-<h1>Speak Your Message</h1>
+<h1>Speak Message</h1>
 
-<button id="startBtn">Start Speaking</button>
-<button id="stopBtn">Stop Speaking</button>
-<br>
-<button id="copyBtn">Copy Message</button>
-<button id="readBtn">Read Message</button>
+<button id="startBtn">▶ Start Speaking</button>
+<button id="stopBtn">■ Stop Speaking</button>
+
+<div class="status" id="status"></div>
 
 <textarea id="output" placeholder="Your message will appear here..."></textarea>
 
@@ -60,47 +72,58 @@
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
 
+  recognition.lang = "en-NZ";
   recognition.continuous = true;
   recognition.interimResults = false;
-  recognition.lang = "en-NZ";
+
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const output = document.getElementById("output");
+  const status = document.getElementById("status");
 
   let listening = false;
 
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
       if (event.results[i].isFinal) {
-        document.getElementById("output").value += event.results[i][0].transcript + " ";
+        output.value += event.results[i][0].transcript + " ";
       }
     }
   };
 
-  // 🔑 THIS IS THE FIX
   recognition.onend = () => {
     if (listening) {
       recognition.start(); // auto-restart after silence
     }
   };
 
-  document.getElementById("startBtn").onclick = () => {
-    if (!listening) {
-      listening = true;
-      recognition.start();
-    }
+  startBtn.onclick = () => {
+    listening = true;
+    recognition.start();
+    status.textContent = "Listening…";
+    startBtn.style.display = "none";
+    stopBtn.style.display = "block";
   };
 
-  document.getElementById("stopBtn").onclick = () => {
+  stopBtn.onclick = () => {
     listening = false;
     recognition.stop();
-  };
+    status.textContent = "Reading message…";
 
-  document.getElementById("copyBtn").onclick = () => {
-    navigator.clipboard.writeText(document.getElementById("output").value);
-    alert("Message copied");
-  };
+    startBtn.style.display = "block";
+    stopBtn.style.display = "none";
 
-  document.getElementById("readBtn").onclick = () => {
-    const msg = new SpeechSynthesisUtterance(document.getElementById("output").value);
-    speechSynthesis.speak(msg);
+    // 🔊 Auto-read
+    const speech = new SpeechSynthesisUtterance(output.value);
+    speech.lang = "en-NZ";
+
+    speech.onend = () => {
+      // 📋 Auto-copy after read
+      navigator.clipboard.writeText(output.value);
+      status.textContent = "Message copied";
+    };
+
+    window.speechSynthesis.speak(speech);
   };
 </script>
 
