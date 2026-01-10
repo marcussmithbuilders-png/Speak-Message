@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speak Message</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f2f2f2;
+    text-align: center;
+    padding: 20px;
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  button {
+    width: 95%;
+    max-width: 500px;
+    font-size: 28px;
+    padding: 22px;
+    margin: 18px 0;
+    border: none;
+    border-radius: 16px;
+    color: white;
+  }
+
+  #startBtn {
+    background: #2e7d32;
+  }
+
+  #startBtn.listening {
+    animation: pulse 1.2s infinite;
+  }
+
+  #stopBtn {
+    background: #c62828;
+    display: none;
+    margin-top: 40px;
+  }
+
+  #readAgainBtn {
+    background: #1565c0;
+    display: none;
+  }
+
+  textarea {
+    width: 95%;
+    max-width: 700px;
+    height: 220px;
+    font-size: 26px;
+    padding: 18px;
+    margin-top: 25px;
+    border-radius: 14px;
+    border: 2px solid #ccc;
+  }
+
+  .status {
+    font-size: 22px;
+    margin-top: 15px;
+    min-height: 30px;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+</style>
+</head>
+
+<body>
+
+<h1>Speak Message</h1>
+
+<button id="startBtn">START SPEAKING</button>
+
+<div class="status" id="status"></div>
+
+<textarea id="output" placeholder="Your message will appear here..."></textarea>
+
+<button id="stopBtn">FINISHED TALKING</button>
+<button id="readAgainBtn">READ AGAIN</button>
+
+<script>
+  let recognition;
+  let listening = false;
+
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const readAgainBtn = document.getElementById("readAgainBtn");
+  const output = document.getElementById("output");
+  const status = document.getElementById("status");
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "en-NZ";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+      const lastResult = event.results[event.results.length - 1];
+      if (lastResult.isFinal) {
+        output.value += lastResult[0].transcript + " ";
+      }
+    };
+
+    recognition.onend = () => {
+      if (listening) recognition.start();
+    };
+  } else {
+    alert("Speech recognition is not supported on this device.");
+  }
+
+  function speakMessage() {
+    if (!output.value.trim()) return;
+
+    const msg = new SpeechSynthesisUtterance(output.value);
+    msg.rate = 0.75;
+    msg.pitch = 0.9;
+
+    const voices = speechSynthesis.getVoices();
+    const maleVoice = voices
